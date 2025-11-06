@@ -24,10 +24,10 @@ const FSRC = `
 `;
 
 const IMAGE_SOURCES = [
-  '../resources/row1.jpg', // Row 1 texture 
-  '../resources/row2.jpg', // Row 2 texture 
-  '../resources/row3.jpg', // Row 3 texture 
-  '../resources/row4.jpg'  // Row 4 texture 
+  '../resourcesK/row1.jpg', // Row 1 texture 
+  '../resourcesK/row2.jpg', // Row 2 texture 
+  '../resourcesK/row3.jpg', // Row 3 texture 
+  '../resourcesK/row4.jpg'  // Row 4 texture 
 ];
 
 function main() {
