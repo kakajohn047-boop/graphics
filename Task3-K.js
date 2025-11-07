@@ -28,8 +28,7 @@ const SRC = [
   '../resourcesK/row4.jpg'
 ];
 
-let gl, uMat, uSampler, uST, quad, tex = [];
-let tPrev = 0, r2 = 1, r3 = 2, swap = 0;
+let gl, uMat, uSampler, uST, tPrev = 0, tex = [];
 
 function main(){
   const cv = document.getElementById('webgl');
@@ -38,7 +37,7 @@ function main(){
   if(!initShaders(gl, VS, FS)) return;
 
   gl.viewport(0,0,cv.width,cv.height);
-  quad = makeQuad(gl);
+  makeQuad(gl);
 
   uMat     = gl.getUniformLocation(gl.program,'uMat');
   uSampler = gl.getUniformLocation(gl.program,'uSampler');
@@ -51,18 +50,11 @@ function main(){
 function tick(now){
   const dt = (now - tPrev) / 1000;
   tPrev = now;
-
-  swap += dt * 0.5;               // 0→1
-  if (swap >= 1){
-    swap -= 1;
-    const tmp = r2; r2 = r3; r3 = tmp;
-  }
-
-  draw(now * 0.001, swap);
+  draw(now * 0.001);  // seconds
   requestAnimationFrame(tick);
 }
 
-function draw(t, s){
+function draw(t){
   gl.clearColor(0,0,0,1);
   gl.clear(gl.COLOR_BUFFER_BIT);
 
@@ -76,7 +68,7 @@ function draw(t, s){
     if(c===3) st=[2,2];
     gl.uniform2f(uST, st[0], st[1]);
 
-    // row 1: rotate around Y
+    // row 1: rotate Y
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, tex[0]);
     M.setIdentity();
@@ -85,24 +77,24 @@ function draw(t, s){
     gl.uniformMatrix4fv(uMat,false,M.elements);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
-    // rows 2 & 3: slide and swap
-    const d = 0.5;
-    const y2 = centers[3-1] - d*s;
-    const y3 = centers[3-2] + d*s;
+    // rows 2 & 3: vertical oscillation (no swap)
+    const A = 0.25;                 // amplitude
+    const w = 2*Math.PI*0.5;        // 0.5 Hz
+    const off = Math.sin(w*t)*A;
 
-    gl.bindTexture(gl.TEXTURE_2D, tex[r2]);
+    gl.bindTexture(gl.TEXTURE_2D, tex[1]); // row 2 stays row 2 image
     M.setIdentity();
-    M.translate(centers[c], y2, 0);
+    M.translate(centers[c], centers[3-1] - off, 0); // down when off>0
     gl.uniformMatrix4fv(uMat,false,M.elements);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
-    gl.bindTexture(gl.TEXTURE_2D, tex[r3]);
+    gl.bindTexture(gl.TEXTURE_2D, tex[2]); // row 3 stays row 3 image
     M.setIdentity();
-    M.translate(centers[c], y3, 0);
+    M.translate(centers[c], centers[3-2] + off, 0); // up when off>0
     gl.uniformMatrix4fv(uMat,false,M.elements);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
-    // row 4: rotate around X
+    // row 4: rotate X
     gl.bindTexture(gl.TEXTURE_2D, tex[3]);
     M.setIdentity();
     M.translate(centers[c], centers[3-3], 0);
@@ -121,9 +113,7 @@ function makeQuad(gl){
      hs,  hs,
      hs, -hs
   ]);
-  const uv  = new Float32Array([
-    0,1,  0,0,  1,1,  1,0
-  ]);
+  const uv  = new Float32Array([ 0,1,  0,0,  1,1,  1,0 ]);
 
   const bPos = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, bPos);
@@ -138,8 +128,6 @@ function makeQuad(gl){
   const a_uv = gl.getAttribLocation(gl.program,'a_uv');
   gl.vertexAttribPointer(a_uv, 2, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(a_uv);
-
-  return true;
 }
 
 function loadAll(list, done){
